@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu regalo te espera</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..900&family=Inter:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    /* === Paleta gamer: aceros, neón y un toque de Discord === */
+    --abismo: #0a0c10;
+    --penumbra: #161a22;
+    --blurple: #5865F2;
+    --blurple-soft: #8b94ff;
+    --acero: #2e3440;
+    --acero-claro: #6b7685;
+    --neon: #ff8a3d;
+    --neon2: #00e0ff;
+    --alerta: #ff3b3b;
+    --liston: #39ff88;
+    --chispa: #00e0ff;
+    --niebla: #eef1f5;
+    --bruma: #8b93a1;
+
+    /* progreso global de scroll, lo actualiza el JS (0 -> 1) */
+    --p: 0;
+
+    /* tramos derivados del progreso global, todo calculado en CSS */
+    --t2: clamp(0, calc((var(--p) - 0.10) / 0.20), 1); /* el regalo se abre */
+    --t3: clamp(0, calc((var(--p) - 0.28) / 0.18), 1); /* el orbe crece */
+    --t6: clamp(0, calc((var(--p) - 0.86) / 0.14), 1); /* gran final */
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background: var(--abismo);
+    color: var(--niebla);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ============ Fondo: tinte que va cambiando con el scroll ============ */
+  .tinte{
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 35%,
+      color-mix(in srgb, var(--blurple) calc(40% - var(--p) * 25%), transparent) 0%,
+      color-mix(in srgb, var(--chispa) calc(var(--p) * 35%), transparent) 55%,
+      transparent 80%);
+    transition: background 0.2s linear;
+    mix-blend-mode: screen;
+    opacity: 0.55;
+  }
+
+  /* ============ Estrellas ============ */
+  .estrellas{ position: fixed; inset: 0; z-index: 0; pointer-events:none; overflow:hidden; }
+  .estrella{
+    position: absolute; border-radius: 50%;
+    background: var(--niebla);
+    animation: titilar var(--dur) ease-in-out infinite alternate;
+  }
+  @keyframes titilar{ from{ opacity:.15; } to{ opacity:.9; } }
+  .estrellas .capa-lejos{ position:absolute; inset:0; transform: translateY(calc(var(--p) * -60px)); }
+  .estrellas .capa-cerca{ position:absolute; inset:0; transform: translateY(calc(var(--p) * -160px)); }
+
+  /* barra de progreso */
+  .progreso{
+    position: fixed; top:0; left:0; height: 3px; z-index: 50;
+    width: calc(var(--p) * 100%);
+    background: linear-gradient(90deg, var(--liston), var(--chispa), var(--blurple-soft));
+    transition: width .05s linear;
+  }
+
+  /* ============ Escenario fijo central ============ */
+  .escenario{
+    position: fixed; inset: 0; z-index: 5;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+    opacity: calc(1 - var(--t6) * 1);
+    transform: scale(calc(1 + var(--t6) * 3.2));
+    transition: opacity .2s linear;
+  }
+
+  .regalo{
+    position: relative;
+    width: clamp(140px, 26vw, 230px);
+    height: clamp(140px, 26vw, 230px);
+    animation: flotar 4s ease-in-out infinite;
+  }
+  @keyframes flotar{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-14px); } }
+
+  /* --- caja del regalo --- */
+  .caja{
+    position:absolute; left:0; bottom:0; width:100%; height:62%;
+    border-radius: 14px;
+    background: linear-gradient(155deg, var(--acero-claro), var(--acero));
+    box-shadow: 0 0 60px color-mix(in srgb, var(--neon2) 25%, transparent);
+    opacity: calc(1 - var(--t2));
+    transform: scale(calc(1 - var(--t2) * 0.55));
+    z-index: 3;
+  }
+  .tapa{
+    position:absolute; left:-5%; top: 26%; width:110%; height:28%;
+    border-radius: 10px;
+    background: linear-gradient(155deg, #8b96a6, var(--acero-claro));
+    transform-origin: 12% 100%;
+    transform: translateY(calc(var(--t2) * -100px)) rotate(calc(var(--t2) * -58deg));
+    opacity: calc(1 - var(--t2) * 0.95);
+    z-index: 5;
+  }
+  .listonv{
+    position:absolute; left:42%; top:0; width:16%; height:90%;
+    background: var(--chispa); border-radius: 4px;
+    opacity: calc(1 - var(--t2));
+    transform: translateY(calc(var(--t2) * -50px)) scaleY(calc(1 - var(--t2)*.5));
+    z-index: 4;
+  }
+  .listonh{
+    position:absolute; left:0; top:42%; width:100%; height:16%;
+    background: var(--chispa); border-radius: 4px;
+    opacity: calc(1 - var(--t2));
+    transform: translateX(calc(var(--t2) * 40px)) scaleX(calc(1 - var(--t2)*.5));
+    z-index: 4;
+  }
+  .moño{
+    position:absolute; top:6%; left:50%; width:34%; height:18%;
+    transform: translateX(-50%);
+    opacity: calc(1 - var(--t2));
+    z-index: 6;
+  }
+  .moño::before, .moño::after{
+    content:''; position:absolute; width:60%; height:100%;
+    border-radius: 50% 50% 50% 0;
+    background: var(--chispa);
+  }
+  .moño::before{ left:0; transform: rotate(-25deg); }
+  .moño::after{ right:0; transform: rotate(25deg) scaleX(-1); }
+  .moño{
+    transform: translate(-50%, calc(var(--t2) * -70px)) rotate(calc(var(--t2) * 140deg)) scale(calc(1 - var(--t2)*.4));
+  }
+
+  /* --- el orbe / mascota "discordesco" que emerge --- */
+  .orbe-wrap{
+    position:absolute; inset:0; z-index:2;
+    display:flex; align-items:center; justify-content:center;
+    opacity: calc(var(--t2) * (1 - var(--t6) * .8));
+    transform:
+      scale(calc(0.25 + var(--t2) * 0.85 + var(--t3) * 0.65))
+      rotate(calc((1 - var(--t2)) * 220deg));
+  }
+  .orbe-glow{
+    position:absolute; width: 160%; height:160%; border-radius:50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--blurple) 55%, transparent), transparent 70%);
+    filter: blur(6px);
+    animation: pulso 2.6s ease-in-out infinite;
+  }
+  @keyframes pulso{ 0%,100%{ transform: scale(1); opacity:.7; } 50%{ transform: scale(1.12); opacity:1; } }
+
+  .anillo{
+    position:absolute; width:118%; height:118%; border-radius:50%;
+    border: 2px dashed color-mix(in srgb, var(--blurple-soft) 70%, transparent);
+    animation: girar var(--vel-anillo) linear infinite;
+  }
+  @keyframes girar{ to{ transform: rotate(360deg); } }
+
+  .particulas{ position:absolute; inset:0; }
+  .orbita{ position:absolute; inset:0; animation: girar linear infinite; }
+  .orbita:nth-child(1){ animation-duration: 7s; }
+  .orbita:nth-child(2){ animation-duration: 11s; animation-direction: reverse; }
+  .orbita:nth-child(3){ animation-duration: 16s; }
+  .punto{
+    position:absolute; top:50%; left:50%; border-radius:50%;
+    transform: translate(-50%,-50%) translateX(var(--radio));
+  }
+  .orbita:nth-child(1) .punto{ width:10px; height:10px; --radio:78px; background: var(--liston); box-shadow:0 0 10px var(--liston); }
+  .orbita:nth-child(2) .punto{ width:7px; height:7px; --radio:95px; background: var(--chispa); box-shadow:0 0 10px var(--chispa); }
+  .orbita:nth-child(3) .punto{ width:6px; height:6px; --radio:65px; background: var(--blurple-soft); box-shadow:0 0 8px var(--blurple-soft); }
+
+  .cara{
+    position:relative; width: 56%; height:56%; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--blurple-soft), var(--blurple) 70%);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--blurple) 70%, transparent), inset -8px -8px 20px rgba(0,0,0,.25);
+    animation: bob 3s ease-in-out infinite;
+  }
+  @keyframes bob{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-6px); } }
+  .ojo{
+    position:absolute; top:40%; width: 20%; height: 26%;
+    background: var(--niebla); border-radius: 50% 50% 45% 45%;
+  }
+  .ojo::after{
+    content:''; position:absolute; width:45%; height:45%; border-radius:50%;
+    background: var(--penumbra); top:30%; left:28%;
+  }
+  .ojo.izq{ left: 22%; }
+  .ojo.der{ left: 58%; }
+
+  /* ============ Contenido / texto que sí scrollea ============ */
+  main{ position:relative; z-index: 10; }
+  .escena{
+    min-height: 100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding: 6vh 6vw;
+  }
+
+  .ojeada{
+    position:absolute; bottom: 6vh; left:50%; transform: translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:.6rem;
+    font-family:'Space Mono', monospace; font-size:.8rem; letter-spacing:.2em;
+    color: var(--bruma); text-transform:uppercase;
+    opacity: max(0, calc(1 - var(--p) * 22));
+  }
+  .ojeada .flecha{ font-size:1.4rem; animation: rebote 1.6s ease-in-out infinite; }
+  @keyframes rebote{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(8px); } }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace; font-size: .85rem; letter-spacing:.35em;
+    text-transform: uppercase; color: var(--chispa); margin-bottom: 1.2rem;
+  }
+
+  h1, h2{
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+
+  .titulo-hero{ font-size: clamp(2.2rem, 7vw, 4.5rem); max-width: 16ch; }
+  .titulo-hero span{ color: var(--liston); }
+
+  .subtexto{
+    margin-top: 1.2rem; font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--bruma); max-width: 34ch;
+  }
+
+  /* --- transición "¿estás preparado?" --- */
+  .preparado{
+    font-size: clamp(2.6rem, 12vw, 7.5rem);
+    color: var(--niebla);
+    opacity: 0; filter: blur(18px); transform: scale(.55);
+    transition: opacity 1s cubic-bezier(.2,.8,.2,1), filter 1s cubic-bezier(.2,.8,.2,1), transform 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .preparado.visible{
+    opacity: 1; filter: blur(0); transform: scale(1);
+    text-shadow: 0 0 40px color-mix(in srgb, var(--blurple-soft) 60%, transparent);
+  }
+
+  /* --- "se viene el mejor servidor" letra por letra --- */
+  .servidor{
+    font-size: clamp(1.8rem, 8vw, 5rem);
+    max-width: 18ch;
+  }
+  .servidor .palabra{
+    display:inline-block; margin: 0 .2em;
+    opacity:0; transform: translateY(.6em) rotate(4deg);
+    transition: opacity .6s ease, transform .6s ease;
+    transition-delay: calc(var(--i) * 70ms);
+  }
+  .servidor.visible .palabra{ opacity:1; transform: translateY(0) rotate(0); }
+  .servidor .resaltado{ color: var(--blurple-soft); }
+
+  /* --- "cansado? aburrido? conectate" glitch --- */
+  .grito{
+    font-size: clamp(2rem, 9vw, 6rem);
+    color: var(--niebla);
+    position: relative;
+  }
+  .grito .conecta{ color: var(--chispa); }
+  .grito.visible{
+    animation: glitch 2.4s linear infinite;
+  }
+  @keyframes glitch{
+    0%, 90%, 100%{ text-shadow: none; transform: translate(0,0); }
+    91%{ text-shadow: -3px 0 var(--chispa), 3px 0 var(--blurple-soft); transform: translate(-2px,1px); }
+    93%{ text-shadow: 3px 0 var(--chispa), -3px 0 var(--blurple-soft); transform: translate(2px,-1px); }
+    95%{ text-shadow: -2px 0 var(--liston), 2px 0 var(--blurple-soft); transform: translate(1px,1px); }
+    97%{ text-shadow: none; transform: translate(0,0); }
+  }
+
+  /* ============ CTA final ============ */
+  .final{ position: relative; z-index: 11; }
+  .tarjeta{
+    background: color-mix(in srgb, var(--penumbra) 85%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blurple-soft) 35%, transparent);
+    border-radius: 20px;
+    padding: clamp(1.6rem, 4vw, 3rem);
+    max-width: 480px; width: 100%;
+    box-shadow: 0 0 60px color-mix(in srgb, var(--blurple) 35%, transparent);
+    backdrop-filter: blur(6px);
+    opacity: var(--t6);
+    transform: translateY(calc((1 - var(--t6)) * 40px));
+  }
+  .tarjeta h2{ font-size: clamp(1.6rem, 4vw, 2.4rem); margin-bottom:.6rem; }
+  .tarjeta p{ color: var(--bruma); margin-bottom: 1.6rem; }
+  .form-link{ display:flex; flex-direction:column; gap:.7rem; }
+  .form-link input{
+    background: var(--abismo); border: 1px solid color-mix(in srgb, var(--bruma) 40%, transparent);
+    color: var(--niebla); border-radius: 10px; padding: .9rem 1rem; font-size:1rem;
+    font-family:'Inter', sans-serif;
+  }
+  .form-link input:focus-visible{ outline: 2px solid var(--blurple-soft); outline-offset: 2px; }
+  .form-link button{
+    background: linear-gradient(120deg, var(--blurple), var(--chispa));
+    color: var(--niebla); border:none; border-radius:10px; padding: .9rem 1rem;
+    font-size:1rem; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif;
+    transition: transform .15s ease, filter .15s ease;
+  }
+  .form-link button:hover{ filter: brightness(1.1); }
+  .form-link button:active{ transform: scale(.98); }
+  .form-link button:focus-visible{ outline: 2px solid var(--niebla); outline-offset: 2px; }
+  .aviso{ font-size:.85rem; color: var(--bruma); margin-top:.8rem; min-height: 1.2em; }
+
+  .firma{
+    text-align:center; font-family:'Space Mono', monospace; font-size:.8rem;
+    color: var(--bruma); padding: 4vh 0 6vh; letter-spacing:.15em;
+  }
+
+  /* shake feedback */
+  .shake{ animation: shake .4s ease; }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    20%,60%{ transform: translateX(-6px); }
+    40%,80%{ transform: translateX(6px); }
+  }
+
+  /* --- fila de íconos de juegos --- */
+  .iconos-fila{
+    display:flex; gap: 1.4rem; justify-content:center; flex-wrap:wrap;
+    margin: 1.8rem 0;
+  }
+  .icono-juego{
+    display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    font-family:'Space Mono', monospace; font-size:.7rem; letter-spacing:.12em;
+    text-transform:uppercase; color: var(--bruma);
+    opacity:0; transform: translateY(20px) scale(.85);
+    transition: opacity .5s ease, transform .5s ease;
+    transition-delay: calc(var(--i) * 120ms);
+  }
+  .iconos-fila.visible .icono-juego{ opacity:1; transform: translateY(0) scale(1); }
+  .icono-visual{
+    width:54px; height:54px; border-radius:12px; background: var(--acero);
+    border:1px solid color-mix(in srgb, var(--acero-claro) 55%, transparent);
+    position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .icono-visual.bloque{ background: linear-gradient(to bottom, #6fae46 50%, #8a6a48 50%); }
+  .icono-visual.bloque::before{
+    content:''; position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 9px, transparent 9px 18px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 9px, transparent 9px 18px);
+  }
+  .icono-visual.ojo .iris{
+    width:24px; height:24px; border-radius:50%; background: var(--alerta);
+    box-shadow: 0 0 14px var(--alerta); position:relative;
+    animation: parpadear-ojo 5s ease-in-out infinite;
+  }
+  .icono-visual.ojo .iris::after{ content:''; position:absolute; inset:32%; background: var(--abismo); border-radius:50%; }
+  @keyframes parpadear-ojo{ 0%,90%,100%{ transform: scaleY(1); } 95%{ transform: scaleY(.1); } }
+  .icono-visual.disco .anillo-disco{
+    width:36px; height:36px; border-radius:50%; border: 3px solid var(--chispa);
+    position:relative; animation: girar 6s linear infinite;
+  }
+  .icono-visual.disco .anillo-disco::after{ content:''; position:absolute; inset:34%; background: var(--chispa); border-radius:50%; }
+  .icono-visual.monitor .pantalla-icon{
+    width:38px; height:26px; border:3px solid var(--bruma); border-radius:3px; position:relative;
+  }
+  .icono-visual.monitor .pantalla-icon::after{
+    content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
+    width:14px; height:5px; background: var(--bruma); border-radius:0 0 2px 2px;
+  }
+  .icono-visual.monitor .pantalla-icon span{
+    position:absolute; inset:3px;
+    background: repeating-linear-gradient(45deg, var(--alerta) 0 3px, transparent 3px 6px);
+    animation: estatica .12s steps(2) infinite; opacity:.6;
+  }
+  @keyframes estatica{ to{ filter: invert(1); } }
+
+  /* --- carrusel horizontal de clips --- */
+  .clip-hint{
+    font-family:'Space Mono', monospace; font-size:.75rem; color: var(--bruma);
+    letter-spacing:.2em; text-transform:uppercase; margin-bottom:.8rem;
+  }
+  .clips-scroll{
+    display:flex; gap: 1rem; overflow-x:auto; scroll-snap-type:x mandatory;
+    width:100%; max-width: 720px; padding: .3rem .3rem 1rem;
+    scrollbar-color: var(--acero-claro) transparent; scrollbar-width: thin;
+  }
+  .clip-card{
+    flex: 0 0 200px; scroll-snap-align:center;
+    opacity:0; transform: translateY(20px);
+    transition: opacity .5s ease, transform .5s ease;
+    transition-delay: calc(var(--i) * 120ms);
+  }
+  .clips-scroll.visible .clip-card{ opacity:1; transform: translateY(0); }
+  .clip-pantalla{
+    width:100%; aspect-ratio: 16/9; border-radius:10px; background: var(--acero);
+    border:1px solid color-mix(in srgb, var(--acero-claro) 55%, transparent);
+    position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:.5rem; overflow:hidden;
+  }
+  .clip-caption{
+    margin-top:.6rem; font-size:.8rem; color: var(--bruma); font-family:'Space Mono', monospace; line-height:1.5;
+  }
+  .clip-play{
+    position:absolute; top:8px; left:8px; width:22px; height:22px; border-radius:50%;
+    background: color-mix(in srgb, var(--abismo) 70%, transparent);
+    display:flex; align-items:center; justify-content:center; font-size:.6rem; color: var(--niebla);
+  }
+  .clip-label{
+    font-family:'Space Mono', monospace; font-size:.65rem; letter-spacing:.2em; color: var(--bruma);
+  }
+  .barra-boss{
+    width:75%; height:10px; border-radius:4px; overflow:hidden;
+    background: color-mix(in srgb, var(--alerta) 25%, var(--acero));
+  }
+  .barra-boss::after{
+    content:''; display:block; height:100%; background: var(--alerta);
+    animation: drenar 4s ease-in-out infinite;
+  }
+  @keyframes drenar{ 0%{ width:100%; } 65%{ width:5%; } 85%,100%{ width:100%; } }
+  .bateria{ width:46px; height:24px; border:2px solid var(--bruma); border-radius:4px; position:relative; }
+  .bateria::before{
+    content:''; position:absolute; right:-6px; top:6px; width:4px; height:12px;
+    background: var(--bruma); border-radius:0 2px 2px 0;
+  }
+  .bateria::after{
+    content:''; position:absolute; inset:3px; background: var(--neon2); border-radius:2px;
+    transform-origin:left; animation: descargar 3s linear infinite;
+  }
+  @keyframes descargar{
+    0%{ transform: scaleX(1); background: var(--neon2); }
+    70%{ transform: scaleX(.06); background: var(--alerta); }
+    100%{ transform: scaleX(.06); background: var(--alerta); }
+  }
+  .escudo{
+    width:42px; height:48px; background: var(--chispa);
+    clip-path: polygon(50% 0%, 100% 20%, 100% 65%, 50% 100%, 0% 65%, 0% 20%);
+    animation: temblar 3.5s ease-in-out infinite;
+  }
+  @keyframes temblar{
+    0%, 78%{ transform: scale(1) rotate(0); opacity:1; }
+    84%{ transform: scale(.92) rotate(-5deg); }
+    90%{ transform: scale(1.06) rotate(4deg); opacity:.45; }
+    96%{ opacity:0; transform: scale(.8); }
+    100%{ opacity:1; transform: scale(1); }
+  }
+  .gg-text{
+    font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:2rem;
+    color: var(--bruma); animation: ggflash 2.6s ease-in-out infinite;
+  }
+  @keyframes ggflash{
+    0%, 40%{ color: var(--bruma); transform: scale(1) rotate(0); }
+    50%{ color: var(--alerta); transform: scale(1.25) rotate(-6deg); }
+    60%, 100%{ color: var(--bruma); transform: scale(1) rotate(0); }
+  }
+  .señal{ display:flex; align-items:flex-end; gap:5px; height:34px; }
+  .señal span{ width:8px; border-radius:2px; background: var(--neon2); animation: señalperdida 4s ease-in-out infinite; }
+  .señal span:nth-child(1){ height:35%; animation-delay:0s; }
+  .señal span:nth-child(2){ height:55%; animation-delay:.25s; }
+  .señal span:nth-child(3){ height:75%; animation-delay:.5s; }
+  .señal span:nth-child(4){ height:100%; animation-delay:.75s; }
+  @keyframes señalperdida{ 0%,55%{ opacity:1; } 65%{ opacity:.15; } 100%{ opacity:1; } }
+
+  /* ============ Movimiento reducido ============ */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; scroll-behavior:auto !important; }
+    .escenario{ opacity: 1; transform: none; }
+    .orbe-wrap{ opacity: 1; transform: scale(1); }
+    .preparado, .servidor .palabra, .grito{ opacity:1; filter:none; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="progreso"></div>
+  <div class="tinte"></div>
+  <div class="estrellas">
+    <div class="capa-lejos" id="capa-lejos"></div>
+    <div class="capa-cerca" id="capa-cerca"></div>
+  </div>
+
+  <!-- ===== Escenario fijo: regalo -> orbe ===== -->
+  <div class="escenario">
+    <div class="regalo">
+      <div class="orbe-wrap">
+        <div class="orbe-glow"></div>
+        <div class="anillo" style="--vel-anillo: 14s;"></div>
+        <div class="particulas">
+          <div class="orbita"><div class="punto"></div></div>
+          <div class="orbita"><div class="punto"></div></div>
+          <div class="orbita"><div class="punto"></div></div>
+        </div>
+        <div class="cara">
+          <div class="ojo izq"></div>
+          <div class="ojo der"></div>
+        </div>
+      </div>
+      <div class="moño"></div>
+      <div class="listonv"></div>
+      <div class="listonh"></div>
+      <div class="caja"></div>
+      <div class="tapa"></div>
+    </div>
+  </div>
+
+  <!-- ===== Contenido scrolleable ===== -->
+  <main>
+
+    <section class="escena">
+      <p class="eyebrow">tenés algo esperando</p>
+      <h1 class="titulo-hero">Hay un <span>regalo</span> en el medio de la pantalla.</h1>
+      <p class="subtexto">No toques nada. Solo bajá.</p>
+      <div class="ojeada"><span>scrolleá</span><span class="flecha">↓</span></div>
+    </section>
+
+    <section class="escena">
+      <p class="eyebrow">algo se mueve ahí adentro</p>
+      <h2 class="titulo-hero">La tapa ya no aguanta más.</h2>
+      <p class="subtexto">Seguí bajando. Esto recién empieza.</p>
+    </section>
+
+    <section class="escena">
+      <h2 class="preparado" data-reveal>¿ESTÁS<br>PREPARADO?</h2>
+    </section>
+
+    <section class="escena">
+      <p class="eyebrow">mientras tanto...</p>
+      <h2 class="titulo-hero" style="font-size:clamp(1.8rem,5vw,3rem);">Un poco de todo lo que se juega ahí</h2>
+      <div class="iconos-fila" data-reveal-tarjetas>
+        <div class="icono-juego" style="--i:0">
+          <div class="icono-visual bloque"></div>
+          <span>Minecraft</span>
+        </div>
+        <div class="icono-juego" style="--i:1">
+          <div class="icono-visual ojo"><div class="iris"></div></div>
+          <span>REPO</span>
+        </div>
+        <div class="icono-juego" style="--i:2">
+          <div class="icono-visual disco"><div class="anillo-disco"></div></div>
+          <span>Steam</span>
+        </div>
+        <div class="icono-juego" style="--i:3">
+          <div class="icono-visual monitor"><div class="pantalla-icon"><span></span></div></div>
+          <span>Tu PC</span>
+        </div>
+      </div>
+
+      <p class="clip-hint">clips para cuando te aburrís →</p>
+      <div class="clips-scroll" data-reveal-tarjetas>
+        <div class="clip-card" style="--i:0">
+          <div class="clip-pantalla">
+            <span class="clip-play">▶</span>
+            <span class="clip-label">BOSS</span>
+            <div class="barra-boss"></div>
+          </div>
+          <p class="clip-caption">Cuando el host se cuelga justo en el boss final.</p>
+        </div>
+        <div class="clip-card" style="--i:1">
+          <div class="clip-pantalla">
+            <span class="clip-play">▶</span>
+            <div class="bateria"></div>
+          </div>
+          <p class="clip-caption">100% de batería... hasta que abrís el juego.</p>
+        </div>
+        <div class="clip-card" style="--i:2">
+          <div class="clip-pantalla">
+            <span class="clip-play">▶</span>
+            <div class="escudo"></div>
+          </div>
+          <p class="clip-caption">El "tranquilo, yo cubro" que termina en desastre.</p>
+        </div>
+        <div class="clip-card" style="--i:3">
+          <div class="clip-pantalla">
+            <span class="clip-play">▶</span>
+            <span class="gg-text">GG</span>
+          </div>
+          <p class="clip-caption">Cuando dicen "gg" antes de que termine la partida.</p>
+        </div>
+        <div class="clip-card" style="--i:4">
+          <div class="clip-pantalla">
+            <span class="clip-play">▶</span>
+            <div class="señal"><span></span><span></span><span></span><span></span></div>
+          </div>
+          <p class="clip-caption">El lag justo cuando ibas a hacer la jugada perfecta.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="escena">
+      <h2 class="servidor" data-reveal-palabras>
+        <span class="palabra" style="--i:0">Se</span>
+        <span class="palabra" style="--i:1">viene</span>
+        <span class="palabra" style="--i:2">el</span>
+        <span class="palabra resaltado" style="--i:3">mejor</span>
+        <span class="palabra resaltado" style="--i:4">servidor</span>
+        <span class="palabra" style="--i:5">de</span>
+        <span class="palabra resaltado" style="--i:6">Discord.</span>
+      </h2>
+    </section>
+
+    <section class="escena">
+      <h2 class="grito" data-reveal>¿CANSADO? ¿ABURRIDO?<br><span class="conecta">CONECTATE.</span></h2>
+    </section>
+
+    <section class="escena final">
+      <div class="tarjeta">
+        <h2>Tu lugar ya existe.</h2>
+        <p>Pegá el link de tu servidor y entrá. Sin vueltas.</p>
+        <div class="form-link">
+          <label for="link" class="sr-only" style="position:absolute; left:-9999px;">Link de invitación de Discord</label>
+          <input type="url" id="link" placeholder="https://discord.gg/tu-servidor" value="https://discord.gg/c9qjDFwYQ3" autocomplete="off">
+          <button id="entrar">Entrar al servidor</button>
+        </div>
+        <p class="aviso" id="aviso"></p>
+      </div>
+    </section>
+
+    <p class="firma">hecho con html, css y un poco de scroll ✦</p>
+  </main>
+
+<script>
+  // ---- generar estrellas ----
+  function generarEstrellas(contenedor, cantidad, tamañoMax){
+    let html = '';
+    for(let i=0; i<cantidad; i++){
+      const tam = (Math.random()*tamañoMax + 1).toFixed(1);
+      const top = (Math.random()*100).toFixed(2);
+      const left = (Math.random()*100).toFixed(2);
+      const dur = (Math.random()*3 + 2).toFixed(2);
+      const delay = (Math.random()*3).toFixed(2);
+      html += `<div class="estrella" style="width:${tam}px;height:${tam}px;top:${top}%;left:${left}%;--dur:${dur}s;animation-delay:${delay}s;"></div>`;
+    }
+    contenedor.innerHTML = html;
+  }
+  generarEstrellas(document.getElementById('capa-lejos'), 70, 1.6);
+  generarEstrellas(document.getElementById('capa-cerca'), 35, 2.6);
+
+  // ---- progreso de scroll -> variable CSS --p ----
+  const root = document.documentElement;
+  let ultimoP = -1;
+  function actualizarProgreso(){
+    const max = document.body.scrollHeight - window.innerHeight;
+    const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    if(Math.abs(p - ultimoP) > 0.0005){
+      root.style.setProperty('--p', p.toFixed(4));
+      ultimoP = p;
+    }
+    requestAnimationFrame(actualizarProgreso);
+  }
+  actualizarProgreso();
+
+  // ---- revelar textos al entrar en pantalla ----
+  const observer = new IntersectionObserver((entradas) => {
+    entradas.forEach(entrada => {
+      if(entrada.isIntersecting){
+        entrada.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.55 });
+
+  document.querySelectorAll('[data-reveal], [data-reveal-palabras], [data-reveal-tarjetas]').forEach(el => observer.observe(el));
+
+  // ---- botón final ----
+  const input = document.getElementById('link');
+  const boton = document.getElementById('entrar');
+  const aviso = document.getElementById('aviso');
+
+  boton.addEventListener('click', () => {
+    const valor = input.value.trim();
+    if(!valor){
+      aviso.textContent = 'Pegá un link primero 👀';
+      input.classList.add('shake');
+      input.focus();
+      setTimeout(() => input.classList.remove('shake'), 400);
+      return;
+    }
+    aviso.textContent = 'Abriendo...';
+    window.open(valor, '_blank', 'noopener');
+  });
+</script>
+
+</body>
+</html>
